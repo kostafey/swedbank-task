@@ -1,0 +1,122 @@
+package com.kostafey.swedbanktest.db;
+
+import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+public class InitDB {
+    private static final String CREATE_FLOOR_SQL = """
+        CREATE TABLE IF NOT EXISTS Floor (            
+        id BIGINT not null auto_increment primary key, 
+        floor_number INT,                              
+        height INT,                                    
+        weight_capacity NUMERIC(20, 2)) """;
+
+    private static final String CREATE_CELL_SQL = """
+        CREATE TABLE IF NOT EXISTS Cell (
+            id BIGINT not null auto_increment primary key, 
+            floor_id INT,                                  
+            occupied BOOLEAN) """;
+
+    private static final ArrayList<Floor> floorsData = new ArrayList<Floor>(
+        Arrays.asList(
+            new Floor(1, -3, new BigDecimal(10), new BigDecimal(100), 
+                Arrays.asList(
+                    new Cell(1, 1, false),
+                    new Cell(2, 1, false),
+                    new Cell(3, 1, false),
+                    new Cell(4, 1, false),
+                    new Cell(5, 1, false),
+                    new Cell(6, 1, false),
+                    new Cell(7, 1, false),
+                    new Cell(8, 1, false))),
+            new Floor(2, -2, new BigDecimal(10), new BigDecimal(100), 
+                Arrays.asList(
+                    new Cell(9, 2, false),
+                    new Cell(10, 2, false),
+                    new Cell(11, 2, false),
+                    new Cell(12, 2, false),
+                    new Cell(13, 2, false),
+                    new Cell(14, 2, false),
+                    new Cell(15, 2, false),
+                    new Cell(16, 2, false))),
+            new Floor(3, -1, new BigDecimal(10), new BigDecimal(100), 
+                Arrays.asList(
+                    new Cell(9, 3, false),
+                    new Cell(10, 3, false),
+                    new Cell(11, 3, false),
+                    new Cell(12, 3, false),
+                    new Cell(13, 3, false),
+                    new Cell(14, 3, false),
+                    new Cell(15, 3, false),
+                    new Cell(16, 3, false)))
+        ));
+
+    public static void createDB() {
+        Connection dbConnection = null;
+        Statement statement = null;
+        try {
+            dbConnection = ConnManager.getConnection();
+            statement = dbConnection.createStatement();
+            statement.execute(CREATE_FLOOR_SQL);
+            statement.execute(CREATE_CELL_SQL);
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (dbConnection != null) {
+                    dbConnection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void writeData() {
+        Connection dbConnection = null;
+        Statement statement = null;
+        try {
+            dbConnection = ConnManager.getConnection();
+            DecimalFormat df = new DecimalFormat("#,###.00");
+            for (Floor f : floorsData) {
+                statement = dbConnection.createStatement();
+                String insertDataSQL = String.format(
+                    "MERGE INTO Floor (id, floor_number, height, weight_capacity) " + 
+                    "VALUES (%d, %d, %s, %s)", 
+                    f.getId(), f.getFloorNumber(), 
+                    df.format(f.getHeight()), df.format(f.getWeightCapacity()));
+                statement.executeUpdate(insertDataSQL);
+                for (Cell c : f.cells) {
+                    statement = dbConnection.createStatement();
+                    insertDataSQL = String.format(
+                        "MERGE INTO Cell (id, floor_id, occupied) " +
+                        "VALUES (%d, %d, %s)", 
+                        c.getId(), c.getFloorId(), c.getOccupied().toString());
+                    statement.executeUpdate(insertDataSQL);
+                }            
+            }
+        } catch (SQLException e) {
+            System.out.println(e.getMessage());
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (dbConnection != null) {
+                    dbConnection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+
