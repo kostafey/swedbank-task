@@ -1,5 +1,7 @@
 package com.kostafey.swedbanktest.db;
 
+import java.util.Optional;
+
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -21,5 +23,17 @@ public class OrderDAO {
         } finally {
             HibernateUtil.closeSession();
         }
+    }
+
+    public static Optional<Order> get(Long orderId) {
+        Session session = HibernateUtil.getSession();
+        try {
+            return Optional.ofNullable(session.get(Order.class, orderId));
+        } catch (HibernateException e) {
+            e.printStackTrace();
+        } finally {
+            HibernateUtil.closeSession();
+        }
+        return Optional.empty();
     }
 }

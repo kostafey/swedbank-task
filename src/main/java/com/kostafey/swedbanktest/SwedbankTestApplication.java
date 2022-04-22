@@ -1,19 +1,19 @@
 package com.kostafey.swedbanktest;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.Optional;
-
-import javax.persistence.TypedQuery;
+import java.util.concurrent.TimeUnit;
 
 import com.kostafey.swedbanktest.db.Cell;
 import com.kostafey.swedbanktest.db.Floor;
 import com.kostafey.swedbanktest.db.FloorDAO;
 import com.kostafey.swedbanktest.db.HibernateUtil;
 import com.kostafey.swedbanktest.db.Order;
+import com.kostafey.swedbanktest.db.OrderDAO;
 import com.kostafey.swedbanktest.dto.MeasuringResponse;
 import com.kostafey.swedbanktest.dto.ParkingResponse;
 import com.kostafey.swedbanktest.dto.PickUpRequest;
+import com.kostafey.swedbanktest.dto.PickUpResult;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -102,18 +102,58 @@ public class SwedbankTestApplication {
 			e.printStackTrace();
 		} finally {
 			HibernateUtil.closeSession();
-		}			
+		}
 		return new ParkingResponse(
 			false, null,null, 
 			null, null);
 	}
 
-	public static PickUpRequest pickUpRequest(Long orderId) {
-		return null;
+	public static Long getDurationInMinutes(Order order) {
+		return TimeUnit.MILLISECONDS.toMinutes(
+			order.getStart().getTime() - order.getEnd().getTime());
 	}
 
-	public static PickUpRequest payAndTakeAway(Long orderId, BigDecimal amountPaid) {
-		return null;
+	public static PickUpRequest pickUpRequest(Long orderId) {
+		return OrderDAO.get(orderId)
+			.map(o -> {
+				Long minutes = getDurationInMinutes(o);
+				BigDecimal price = getPricePerMinute(o.cell.floor)
+					.multiply(new BigDecimal(minutes));
+				return new PickUpRequest(orderId, minutes, price);
+			})
+			.orElse(new PickUpRequest(null, null,null));
+	}
+
+	public static PickUpResult payAndTakeCar(Long orderId, BigDecimal amountPaid) {
+		return OrderDAO.get(orderId)
+			.map(o -> {
+				BigDecimal price = getPricePerMinute(o.cell.floor)
+					.multiply(new BigDecimal(getDurationInMinutes(o)));
+				// The actual payment should be within the same minute
+				if (amountPaid == price) {
+					Session session = HibernateUtil.getSession();
+					try {
+						Transaction tx = session.beginTransaction();
+						Cell cell = o.cell;
+						if (cell.getOccupied() == true) {							
+							cell.setOccupied(true);
+							session.update(cell);
+							o.setPaid(true);
+							session.update(o);
+							tx.commit();
+							return new PickUpResult(true, orderId);
+						} else {
+							tx.rollback();
+						}	
+					} catch (HibernateException e) {
+						e.printStackTrace();
+					} finally {
+						HibernateUtil.closeSession();
+					}
+				}
+				return new PickUpResult(false, orderId);
+			})
+			.orElse(new PickUpResult(false, null));
 	}
 
 	public static void main(String[] args) {

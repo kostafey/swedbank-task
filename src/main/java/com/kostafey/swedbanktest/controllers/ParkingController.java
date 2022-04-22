@@ -6,6 +6,7 @@ import com.kostafey.swedbanktest.SwedbankTestApplication;
 import com.kostafey.swedbanktest.dto.MeasuringResponse;
 import com.kostafey.swedbanktest.dto.ParkingResponse;
 import com.kostafey.swedbanktest.dto.PickUpRequest;
+import com.kostafey.swedbanktest.dto.PickUpResult;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,10 +38,10 @@ public class ParkingController {
 		return SwedbankTestApplication.pickUpRequest(orderId);
 	}
 
-	@PostMapping("/pickup/payAndTakeAway")
-	public PickUpRequest payAndTakeAway(
+	@PostMapping("/pickup/payAndTakeCar")
+	public PickUpResult payAndTakeCar(
 		@RequestParam(value = "orderId") Long orderId,
 		@RequestParam(value = "amountPaid") BigDecimal amountPaid) {
-		return SwedbankTestApplication.payAndTakeAway(orderId, amountPaid);
+		return SwedbankTestApplication.payAndTakeCar(orderId, amountPaid);
 	}
 }
