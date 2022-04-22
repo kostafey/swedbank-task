@@ -11,49 +11,59 @@ import java.util.Arrays;
 public class InitDB {
     private static final String CREATE_FLOOR_SQL = """
         CREATE TABLE IF NOT EXISTS Floor (            
-        id BIGINT not null auto_increment primary key, 
-        floor_number INT,                              
-        height INT,                                    
-        weight_capacity NUMERIC(20, 2)) """;
+            id BIGINT not null auto_increment primary key, 
+            floor_number INT,                              
+            height INT,                                    
+            weight_capacity NUMERIC(20, 2)) """;
 
     private static final String CREATE_CELL_SQL = """
         CREATE TABLE IF NOT EXISTS Cell (
             id BIGINT not null auto_increment primary key, 
             floor_id INT,                                  
-            occupied BOOLEAN) """;
+            occupied BOOLEAN,
+            weight_used NUMERIC(20, 2)) """;
+
+    private static final String CREATE_ORDER_SQL = """
+        CREATE TABLE IF NOT EXISTS Order (
+            id BIGINT not null auto_increment primary key, 
+            start TIMESTAMP,
+            end TIMESTAMP,
+            price NUMERIC(20, 2)            
+            paid BOOLEAN,
+            cell_id INT) """;
 
     private static final ArrayList<Floor> floorsData = new ArrayList<Floor>(
         Arrays.asList(
-            new Floor(1, -3, new BigDecimal(10), new BigDecimal(100), 
+            new Floor(1, -3, new BigDecimal(3.2), new BigDecimal(100), 
                 Arrays.asList(
-                    new Cell(1, 1, false),
-                    new Cell(2, 1, false),
-                    new Cell(3, 1, false),
-                    new Cell(4, 1, false),
-                    new Cell(5, 1, false),
-                    new Cell(6, 1, false),
-                    new Cell(7, 1, false),
-                    new Cell(8, 1, false))),
-            new Floor(2, -2, new BigDecimal(10), new BigDecimal(100), 
+                    new Cell(1, 1, new BigDecimal(0), false),
+                    new Cell(2, 1, new BigDecimal(0), false),
+                    new Cell(3, 1, new BigDecimal(0), false),
+                    new Cell(4, 1, new BigDecimal(0), false),
+                    new Cell(5, 1, new BigDecimal(0), false),
+                    new Cell(6, 1, new BigDecimal(0), false),
+                    new Cell(7, 1, new BigDecimal(0), false),
+                    new Cell(8, 1, new BigDecimal(0), false))),
+            new Floor(2, -2, new BigDecimal(3.2), new BigDecimal(100), 
                 Arrays.asList(
-                    new Cell(9, 2, false),
-                    new Cell(10, 2, false),
-                    new Cell(11, 2, false),
-                    new Cell(12, 2, false),
-                    new Cell(13, 2, false),
-                    new Cell(14, 2, false),
-                    new Cell(15, 2, false),
-                    new Cell(16, 2, false))),
-            new Floor(3, -1, new BigDecimal(10), new BigDecimal(100), 
+                    new Cell(9, 2, new BigDecimal(0), false),
+                    new Cell(10, 2, new BigDecimal(0), false),
+                    new Cell(11, 2, new BigDecimal(0), false),
+                    new Cell(12, 2, new BigDecimal(0), false),
+                    new Cell(13, 2, new BigDecimal(0), false),
+                    new Cell(14, 2, new BigDecimal(0), false),
+                    new Cell(15, 2, new BigDecimal(0), false),
+                    new Cell(16, 2, new BigDecimal(0), false))),
+            new Floor(3, -1, new BigDecimal(3.5), new BigDecimal(100), 
                 Arrays.asList(
-                    new Cell(9, 3, false),
-                    new Cell(10, 3, false),
-                    new Cell(11, 3, false),
-                    new Cell(12, 3, false),
-                    new Cell(13, 3, false),
-                    new Cell(14, 3, false),
-                    new Cell(15, 3, false),
-                    new Cell(16, 3, false)))
+                    new Cell(9, 3, new BigDecimal(0), false),
+                    new Cell(10, 3, new BigDecimal(0), false),
+                    new Cell(11, 3, new BigDecimal(0), false),
+                    new Cell(12, 3, new BigDecimal(0), false),
+                    new Cell(13, 3, new BigDecimal(0), false),
+                    new Cell(14, 3, new BigDecimal(0), false),
+                    new Cell(15, 3, new BigDecimal(0), false),
+                    new Cell(16, 3, new BigDecimal(0), false)))
         ));
 
     public static void createDB() {
@@ -64,6 +74,7 @@ public class InitDB {
             statement = dbConnection.createStatement();
             statement.execute(CREATE_FLOOR_SQL);
             statement.execute(CREATE_CELL_SQL);
+            statement.execute(CREATE_ORDER_SQL);
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         } finally {

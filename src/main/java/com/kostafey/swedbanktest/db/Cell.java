@@ -1,5 +1,7 @@
 package com.kostafey.swedbanktest.db;
 
+import java.math.BigDecimal;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -10,7 +12,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -19,8 +20,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "Cell")
-@AllArgsConstructor @NoArgsConstructor 
-@RequiredArgsConstructor
+@NoArgsConstructor @RequiredArgsConstructor
 public class Cell {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,6 +33,9 @@ public class Cell {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "floor_id")
     public Floor floor;
+
+    @Column(name = "weight_used")
+    @NonNull @Getter @Setter private BigDecimal weightUsed;
 
     @Column(name = "occupied")
     @NonNull @Getter @Setter private Boolean occupied;
