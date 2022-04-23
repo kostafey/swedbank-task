@@ -13,7 +13,7 @@ public class InitDB {
         CREATE TABLE IF NOT EXISTS Floor (            
             id BIGINT not null auto_increment primary key, 
             floor_number INT,                              
-            height INT,                                    
+            height NUMERIC(20, 2),                                    
             weight_capacity NUMERIC(20, 2)) """;
 
     private static final String CREATE_CELL_SQL = """
@@ -24,17 +24,17 @@ public class InitDB {
             weight_used NUMERIC(20, 2)) """;
 
     private static final String CREATE_ORDER_SQL = """
-        CREATE TABLE IF NOT EXISTS Order (
+        CREATE TABLE IF NOT EXISTS ParkingOrder (
             id BIGINT not null auto_increment primary key, 
             start TIMESTAMP,
             end TIMESTAMP,
-            price NUMERIC(20, 2)            
+            price NUMERIC(20, 2),
             paid BOOLEAN,
             cell_id INT) """;
 
     private static final ArrayList<Floor> floorsData = new ArrayList<Floor>(
         Arrays.asList(
-            new Floor(1, -3, new BigDecimal(3.2), new BigDecimal(100), 
+            new Floor(1, -3, new BigDecimal(3.2), new BigDecimal(10000), 
                 Arrays.asList(
                     new Cell(1, 1, new BigDecimal(0), false),
                     new Cell(2, 1, new BigDecimal(0), false),
@@ -44,7 +44,7 @@ public class InitDB {
                     new Cell(6, 1, new BigDecimal(0), false),
                     new Cell(7, 1, new BigDecimal(0), false),
                     new Cell(8, 1, new BigDecimal(0), false))),
-            new Floor(2, -2, new BigDecimal(3.2), new BigDecimal(100), 
+            new Floor(2, -2, new BigDecimal(3.2), new BigDecimal(10000), 
                 Arrays.asList(
                     new Cell(9, 2, new BigDecimal(0), false),
                     new Cell(10, 2, new BigDecimal(0), false),
@@ -54,16 +54,16 @@ public class InitDB {
                     new Cell(14, 2, new BigDecimal(0), false),
                     new Cell(15, 2, new BigDecimal(0), false),
                     new Cell(16, 2, new BigDecimal(0), false))),
-            new Floor(3, -1, new BigDecimal(3.5), new BigDecimal(100), 
+            new Floor(3, -1, new BigDecimal(3.5), new BigDecimal(10000), 
                 Arrays.asList(
-                    new Cell(9, 3, new BigDecimal(0), false),
-                    new Cell(10, 3, new BigDecimal(0), false),
-                    new Cell(11, 3, new BigDecimal(0), false),
-                    new Cell(12, 3, new BigDecimal(0), false),
-                    new Cell(13, 3, new BigDecimal(0), false),
-                    new Cell(14, 3, new BigDecimal(0), false),
-                    new Cell(15, 3, new BigDecimal(0), false),
-                    new Cell(16, 3, new BigDecimal(0), false)))
+                    new Cell(17, 3, new BigDecimal(0), false),
+                    new Cell(18, 3, new BigDecimal(0), false),
+                    new Cell(19, 3, new BigDecimal(0), false),
+                    new Cell(20, 3, new BigDecimal(0), false),
+                    new Cell(21, 3, new BigDecimal(0), false),
+                    new Cell(22, 3, new BigDecimal(0), false),
+                    new Cell(23, 3, new BigDecimal(0), false),
+                    new Cell(24, 3, new BigDecimal(0), false)))
         ));
 
     public static void createDB() {
@@ -96,7 +96,7 @@ public class InitDB {
         Statement statement = null;
         try {
             dbConnection = ConnManager.getConnection();
-            DecimalFormat df = new DecimalFormat("#,###.00");
+            DecimalFormat df = new DecimalFormat("#.00");
             for (Floor f : floorsData) {
                 statement = dbConnection.createStatement();
                 String insertDataSQL = String.format(
@@ -108,14 +108,15 @@ public class InitDB {
                 for (Cell c : f.cells) {
                     statement = dbConnection.createStatement();
                     insertDataSQL = String.format(
-                        "MERGE INTO Cell (id, floor_id, occupied) " +
-                        "VALUES (%d, %d, %s)", 
-                        c.getId(), c.getFloorId(), c.getOccupied().toString());
+                        "MERGE INTO Cell (id, floor_id) " +
+                        "VALUES (%d, %d)", 
+                        c.getId(), c.getFloorId(), df.format(c.getWeightUsed()),
+                        c.getOccupied().toString());
                     statement.executeUpdate(insertDataSQL);
                 }            
             }
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         } finally {
             try {
                 if (statement != null) {

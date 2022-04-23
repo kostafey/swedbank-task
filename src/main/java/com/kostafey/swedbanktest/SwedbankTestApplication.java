@@ -1,6 +1,8 @@
 package com.kostafey.swedbanktest;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -14,6 +16,7 @@ import com.kostafey.swedbanktest.dto.MeasuringResponse;
 import com.kostafey.swedbanktest.dto.ParkingResponse;
 import com.kostafey.swedbanktest.dto.PickUpRequest;
 import com.kostafey.swedbanktest.dto.PickUpResult;
+import com.kostafey.swedbanktest.dto.PickUpResult.ResultState;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -67,11 +70,16 @@ public class SwedbankTestApplication {
 	}
 
 	public static BigDecimal getPricePerMinute(Floor floor) {
-		if (floor.getHeight() == new BigDecimal(3.2)) {
-			return new BigDecimal(0.010);
+		if (scaleBigDecimal(floor.getHeight())
+				.compareTo(scaleBigDecimal(new BigDecimal(3.20))) == 0) {
+			return scaleBigDecimal(new BigDecimal(0.025));
 		} else {
-			return new BigDecimal(0.012);
+			return scaleBigDecimal(new BigDecimal(0.030));
 		}
+	}
+
+	public static BigDecimal scaleBigDecimal(BigDecimal d) {
+		return d.setScale(3, RoundingMode.HALF_UP);
 	}
 
 	public static ParkingResponse park(
@@ -109,13 +117,15 @@ public class SwedbankTestApplication {
 	}
 
 	public static Long getDurationInMinutes(Order order) {
-		return TimeUnit.MILLISECONDS.toMinutes(
-			order.getStart().getTime() - order.getEnd().getTime());
+		return Math.max(1, TimeUnit.MILLISECONDS.toMinutes(
+			order.getEnd().getTime() - order.getStart().getTime()));
 	}
 
 	public static PickUpRequest pickUpRequest(Long orderId) {
 		return OrderDAO.get(orderId)
 			.map(o -> {
+				o.setEnd(new Date());
+				OrderDAO.saveOrUpdate(o);
 				Long minutes = getDurationInMinutes(o);
 				BigDecimal price = getPricePerMinute(o.cell.floor)
 					.multiply(new BigDecimal(minutes));
@@ -127,21 +137,42 @@ public class SwedbankTestApplication {
 	public static PickUpResult payAndTakeCar(Long orderId, BigDecimal amountPaid) {
 		return OrderDAO.get(orderId)
 			.map(o -> {
+				if (o.getEnd() == null) {
+					return new PickUpResult(
+						false, ResultState.PICK_UP_REQUEST_NOT_RECEIVED, o.getId());
+				} else if (TimeUnit.MILLISECONDS.toMinutes(
+					// The actual payment should be within 2 minutes from pickup
+					// request. Otherwise the pickup request should be repeated.
+					new Date().getTime() - o.getEnd().getTime()) > 120) {
+						o.setEnd(null);
+						OrderDAO.saveOrUpdate(o);
+						return new PickUpResult(
+							false, ResultState.PAYMENT_TIMEOUT, o.getId());
+				}
+				Cell cell = o.cell;
+				if (cell.getOccupied() == false || o.getPaid() == true) {
+					return new PickUpResult(
+						false, ResultState.NO_CAR, o.getId());
+				}
 				BigDecimal price = getPricePerMinute(o.cell.floor)
-					.multiply(new BigDecimal(getDurationInMinutes(o)));
-				// The actual payment should be within the same minute
-				if (amountPaid == price) {
+					.multiply(new BigDecimal(getDurationInMinutes(o)));				
+				if (amountPaid.compareTo(price) >= 0) {
 					Session session = HibernateUtil.getSession();
 					try {
-						Transaction tx = session.beginTransaction();
-						Cell cell = o.cell;
+						Transaction tx = session.beginTransaction();						
 						if (cell.getOccupied() == true) {							
-							cell.setOccupied(true);
+							cell.setOccupied(false);
 							session.update(cell);
 							o.setPaid(true);
 							session.update(o);
 							tx.commit();
-							return new PickUpResult(true, orderId);
+							ResultState resultState = null;
+							if (amountPaid.compareTo(price) == 0) {
+								resultState = ResultState.OK;
+							} else {
+								resultState = ResultState.OVERPAID_CREDIT;
+							}
+							return new PickUpResult(true, resultState, o.getId());
 						} else {
 							tx.rollback();
 						}	
@@ -150,10 +181,12 @@ public class SwedbankTestApplication {
 					} finally {
 						HibernateUtil.closeSession();
 					}
-				}
-				return new PickUpResult(false, orderId);
+					return new PickUpResult(false, ResultState.ERROR, o.getId());
+				} else {
+					return new PickUpResult(false, ResultState.NOT_ENOUGH_MONEY, o.getId());
+				}				
 			})
-			.orElse(new PickUpResult(false, null));
+			.orElse(new PickUpResult(false, ResultState.NO_SUCH_ORDER, orderId));
 	}
 
 	public static void main(String[] args) {

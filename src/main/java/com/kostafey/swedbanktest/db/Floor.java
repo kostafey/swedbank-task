@@ -10,6 +10,7 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -20,7 +21,7 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "Floor")
-@AllArgsConstructor @NoArgsConstructor
+@NoArgsConstructor @AllArgsConstructor
 public class Floor {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,6 +37,7 @@ public class Floor {
     @Column(name = "weight_capacity")
     @Getter @Setter private BigDecimal weightCapacity;
 
-    @OneToMany(mappedBy="floorId", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinColumn(name="floor_id")
     public List<Cell> cells;    
 }

@@ -1,5 +1,6 @@
 package com.kostafey.swedbanktest;
 
+import com.kostafey.swedbanktest.db.HibernateUtil;
 import com.kostafey.swedbanktest.db.InitDB;
 
 import org.springframework.context.ApplicationListener;
@@ -12,5 +13,6 @@ public class StartupApplicationListener implements ApplicationListener<ContextRe
   @Override public void onApplicationEvent(ContextRefreshedEvent event) {
       InitDB.createDB();
       InitDB.writeData();
+      HibernateUtil.init();
   }
 }

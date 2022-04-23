@@ -2,6 +2,8 @@ package com.kostafey.swedbanktest.db;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.Optional;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -17,7 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "Order")
+@Table(name = "ParkingOrder")
 @NoArgsConstructor
 public class Order {
 
@@ -35,13 +37,17 @@ public class Order {
     @Getter @Setter private BigDecimal price;
 
     @Column(name = "paid")
-    @Getter @Setter private Boolean paid;
+    @Setter private Boolean paid;
+
+    public Boolean getPaid() {
+        return Optional.ofNullable(this.paid).orElse(false);
+    }
 
     @Column(name = "cell_id")
     @Getter @Setter private Integer cellId;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "cell_id")
+    @JoinColumn(name = "cell_id", insertable=false, updatable=false)
     public Cell cell;
 
     public Order(Cell cell) {
