@@ -1,8 +1,8 @@
-package com.kostafey.swedbanktest.dto;
+package com.swedbanktest.dto;
 
 import java.math.BigDecimal;
 
-public record PickUpRequest(
+public record PickUpAskResponse(
     Long orderId,
     Long minutes,
     BigDecimal price

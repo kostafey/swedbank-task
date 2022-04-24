@@ -36,9 +36,9 @@
         <!-- Drop and re-create the database schema on startup -->
         <!-- <property name="hbm2ddl.auto">create</property> -->
 
-         <mapping class="com.kostafey.swedbanktest.db.Floor"/>
-         <mapping class="com.kostafey.swedbanktest.db.Cell"/>
-         <mapping class="com.kostafey.swedbanktest.db.Order"/>
+         <mapping class="com.swedbanktest.db.Floor"/>
+         <mapping class="com.swedbanktest.db.Cell"/>
+         <mapping class="com.swedbanktest.db.Order"/>
     </session-factory>  
   
 </hibernate-configuration>  

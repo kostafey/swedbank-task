@@ -1,4 +1,4 @@
-package com.kostafey.swedbanktest.dto;
+package com.swedbanktest.dto;
 
 public record PickUpResult(
     Boolean carReturned,

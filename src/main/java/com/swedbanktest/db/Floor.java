@@ -1,9 +1,8 @@
-package com.kostafey.swedbanktest.db;
+package com.swedbanktest.db;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;

@@ -1,4 +1,4 @@
-package com.kostafey.swedbanktest.dto;
+package com.swedbanktest.dto;
 
 import java.util.Date;
 

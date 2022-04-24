@@ -1,4 +1,4 @@
-package com.kostafey.swedbanktest.db;
+package com.swedbanktest.db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

@@ -1,4 +1,4 @@
-package com.kostafey.swedbanktest;
+package com.swedbanktest;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -6,17 +6,17 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-import com.kostafey.swedbanktest.db.Cell;
-import com.kostafey.swedbanktest.db.Floor;
-import com.kostafey.swedbanktest.db.FloorDAO;
-import com.kostafey.swedbanktest.db.HibernateUtil;
-import com.kostafey.swedbanktest.db.Order;
-import com.kostafey.swedbanktest.db.OrderDAO;
-import com.kostafey.swedbanktest.dto.MeasuringResponse;
-import com.kostafey.swedbanktest.dto.ParkingResponse;
-import com.kostafey.swedbanktest.dto.PickUpRequest;
-import com.kostafey.swedbanktest.dto.PickUpResult;
-import com.kostafey.swedbanktest.dto.PickUpResult.ResultState;
+import com.swedbanktest.db.Cell;
+import com.swedbanktest.db.Floor;
+import com.swedbanktest.db.FloorDAO;
+import com.swedbanktest.db.HibernateUtil;
+import com.swedbanktest.db.Order;
+import com.swedbanktest.db.OrderDAO;
+import com.swedbanktest.dto.MeasuringResponse;
+import com.swedbanktest.dto.ParkingResponse;
+import com.swedbanktest.dto.PickUpAskResponse;
+import com.swedbanktest.dto.PickUpResult;
+import com.swedbanktest.dto.PickUpResult.ResultState;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -121,7 +121,7 @@ public class SwedbankTestApplication {
 			order.getEnd().getTime() - order.getStart().getTime()));
 	}
 
-	public static PickUpRequest pickUpRequest(Long orderId) {
+	public static PickUpAskResponse pickUpRequest(Long orderId) {
 		return OrderDAO.get(orderId)
 			.map(o -> {
 				o.setEnd(new Date());
@@ -129,9 +129,9 @@ public class SwedbankTestApplication {
 				Long minutes = getDurationInMinutes(o);
 				BigDecimal price = getPricePerMinute(o.cell.floor)
 					.multiply(new BigDecimal(minutes));
-				return new PickUpRequest(orderId, minutes, price);
+				return new PickUpAskResponse(orderId, minutes, price);
 			})
-			.orElse(new PickUpRequest(null, null,null));
+			.orElse(new PickUpAskResponse(null, null,null));
 	}
 
 	public static PickUpResult payAndTakeCar(Long orderId, BigDecimal amountPaid) {

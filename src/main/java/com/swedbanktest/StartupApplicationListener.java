@@ -1,7 +1,7 @@
-package com.kostafey.swedbanktest;
+package com.swedbanktest;
 
-import com.kostafey.swedbanktest.db.HibernateUtil;
-import com.kostafey.swedbanktest.db.InitDB;
+import com.swedbanktest.db.HibernateUtil;
+import com.swedbanktest.db.InitDB;
 
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
