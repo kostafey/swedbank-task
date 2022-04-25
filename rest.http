@@ -1,7 +1,13 @@
 GET http://localhost:8080/parking/request?weight=957&height=1.2
 ###
-POST http://localhost:8080/parking/park?weight=957&height=1.2&cell=2&floor=-3
+POST http://localhost:8080/parking/park?weight=957&height=1.2&cell=1&floor=-3
 ###
-GET http://localhost:8080/pickup/request?orderId=1
+POST http://localhost:8080/pickup/request?orderId=1
 ###
-POST http://localhost:8080/pickup/payAndTakeCar?orderId=1&amountPaid=0.025
+POST http://localhost:8080/pickup/payAndTakeCar?orderId=1&amountPaid=2.775
+###
+GET http://localhost:8080/floors
+###
+GET http://localhost:8080/activeOrders
+###
+POST http://localhost:8080/pickup/all

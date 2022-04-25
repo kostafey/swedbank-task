@@ -1,6 +1,9 @@
 package com.swedbanktest.db;
 
+import java.util.List;
 import java.util.Optional;
+
+import javax.persistence.TypedQuery;
 
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
@@ -36,4 +39,19 @@ public class OrderDAO {
         }
         return Optional.empty();
     }
+
+    public static List<Order> listActive() {
+        List<Order> orders = null;
+        try {
+            TypedQuery<Order> q = HibernateUtil.getSession().createQuery(
+                "SELECT o FROM Order o WHERE o.paid = false",
+                Order.class);
+            orders = q.getResultList();
+        } catch (HibernateException e) {
+            e.printStackTrace();
+        } finally {
+            HibernateUtil.closeSession();
+        }
+        return orders;
+    }    
 }

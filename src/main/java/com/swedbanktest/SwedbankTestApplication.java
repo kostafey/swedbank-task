@@ -3,10 +3,12 @@ package com.swedbanktest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.swedbanktest.db.Cell;
+import com.swedbanktest.db.CellDAO;
 import com.swedbanktest.db.Floor;
 import com.swedbanktest.db.FloorDAO;
 import com.swedbanktest.db.HibernateUtil;
@@ -36,19 +38,25 @@ public class SwedbankTestApplication {
 			.reduce(new BigDecimal(0), (c1, c2) -> c1.add(c2));
 	}
 
-	private static BigDecimal getFloorAvailableWeight(Floor floor) {
+	static BigDecimal getFloorAvailableWeight(Floor floor) {
 		return floor.getWeightCapacity().subtract(
 			getFloorUsedWeight(floor));
 	}
 
+	/**
+	 * The first step for parking - request for available cell.
+	 * @param weight Car weight in kilograms.
+	 * @param height Car height in meters.
+	 * @return Avalable place sign, floor, cell number and price per minute.
+	 */
 	public static MeasuringResponse processParkingRequest(
 		BigDecimal weight, BigDecimal height) {
 		Optional<Floor> selectedFloor = FloorDAO.list().stream()
 			// Find all sutable floors
-			.filter(f -> {			
+			.filter(f -> {
 				return (
 					// Floor height enough for this car
-					f.getHeight().add(HEIGHT_MARGIN).compareTo(height) > 0 &&
+					f.getHeight().compareTo(height.add(HEIGHT_MARGIN)) > 0 &&
 					// Any free cell exists
 					f.cells.stream().anyMatch(c -> c.getOccupied() == false) &&
 					// Total floor available weight not exceeded
@@ -82,16 +90,35 @@ public class SwedbankTestApplication {
 		return d.setScale(3, RoundingMode.HALF_UP);
 	}
 
+	/**
+	 * Actually park the car. Assume it's a post paid.
+	 * 
+	 * @param cellId Cell id obtained from the first step
+	 * @param floorNumber Floor number obtained from the first step
+	 * @param weight Car weight in kilograms.
+	 * @param height Car height in meters.
+	 * @return Succesfull parked sign, order id, floor, cell number,
+	 * date/time of parking and price per minute.
+	 */
 	public static ParkingResponse park(
 		Integer cellId,
 		Integer floorNumber,
 		BigDecimal weight,
 		BigDecimal height) {
-
+		
+		ParkingResponse cantParkResponse = new ParkingResponse(
+			false, null,null, 
+			null, null);
+		if (cellId == null) {
+			return cantParkResponse;
+		}
 		Session session = HibernateUtil.getSession();
 		try {
 			Transaction tx = session.beginTransaction();
 			Cell cell = session.get(Cell.class, cellId);
+			if (cell == null) {
+				return cantParkResponse;
+			}
 			Order order = new Order(cell);
 			Long orderId = null;
 			if (cell.getOccupied() == false && 
@@ -111,9 +138,7 @@ public class SwedbankTestApplication {
 		} finally {
 			HibernateUtil.closeSession();
 		}
-		return new ParkingResponse(
-			false, null,null, 
-			null, null);
+		return cantParkResponse;
 	}
 
 	public static Long getDurationInMinutes(Order order) {
@@ -121,6 +146,12 @@ public class SwedbankTestApplication {
 			order.getEnd().getTime() - order.getStart().getTime()));
 	}
 
+	/**
+	 * Request for car pickup.
+	 * 
+	 * @param orderId Parking order id.
+	 * @return Order id confirmation, parking duration in minutes and price to pay.
+	 */
 	public static PickUpAskResponse pickUpRequest(Long orderId) {
 		return OrderDAO.get(orderId)
 			.map(o -> {
@@ -134,6 +165,13 @@ public class SwedbankTestApplication {
 			.orElse(new PickUpAskResponse(null, null,null));
 	}
 
+	/**
+	 * Actually pickup the car.
+	 * 
+	 * @param orderId
+	 * @param amountPaid
+	 * @return
+	 */
 	public static PickUpResult payAndTakeCar(Long orderId, BigDecimal amountPaid) {
 		return OrderDAO.get(orderId)
 			.map(o -> {
@@ -187,6 +225,40 @@ public class SwedbankTestApplication {
 				}				
 			})
 			.orElse(new PickUpResult(false, ResultState.NO_SUCH_ORDER, orderId));
+	}
+
+	/**
+	 * @return List of floors and cells with with their states.
+	 */
+	public static List<Floor> getFloors() {
+		return FloorDAO.list();
+	}
+
+	/**
+	 * @return List all active orders.
+	 */	
+	public static List<Order> getActiveOrders() {
+		return OrderDAO.listActive();
+	}	
+
+	/**
+	 * Pickup all cars for debugging & in case of fire.
+	 * 
+	 * @return List of floors and cells with with their states after.
+	 */		
+	public static List<Floor> pickupAll() {
+		OrderDAO.listActive().forEach(o -> {
+			o.setEnd(new Date());
+			o.setPaid(true);
+			OrderDAO.saveOrUpdate(o);
+		});
+		FloorDAO.list().forEach(f -> {
+			f.cells.forEach(c -> {
+				c.setOccupied(false);
+				CellDAO.update(c);
+			});
+		});
+		return FloorDAO.list();
 	}
 
 	public static void main(String[] args) {

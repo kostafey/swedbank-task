@@ -1,8 +1,11 @@
 package com.swedbanktest.controllers;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import com.swedbanktest.SwedbankTestApplication;
+import com.swedbanktest.db.Floor;
+import com.swedbanktest.db.Order;
 import com.swedbanktest.dto.MeasuringResponse;
 import com.swedbanktest.dto.ParkingResponse;
 import com.swedbanktest.dto.PickUpAskResponse;
@@ -32,7 +35,7 @@ public class ParkingController {
 		return SwedbankTestApplication.park(cell, floor, weight, height);
 	}
 
-	@GetMapping("/pickup/request")
+	@PostMapping("/pickup/request")
 	public PickUpAskResponse pickUpRequest(
 		@RequestParam(value = "orderId") Long orderId) {
 		return SwedbankTestApplication.pickUpRequest(orderId);
@@ -43,5 +46,23 @@ public class ParkingController {
 		@RequestParam(value = "orderId") Long orderId,
 		@RequestParam(value = "amountPaid") BigDecimal amountPaid) {
 		return SwedbankTestApplication.payAndTakeCar(orderId, amountPaid);
+	}
+
+	@GetMapping("/floors")
+	public List<Floor> getFloors() {
+		return SwedbankTestApplication.getFloors();
+	}
+
+	@GetMapping("/activeOrders")
+	public List<Order> getOrders() {
+		return SwedbankTestApplication.getActiveOrders();
+	}
+
+	/**
+	 * For debugging & in case of fire.
+	 */
+	@PostMapping("/pickup/all")
+	public List<Floor> pickupAll() {
+		return SwedbankTestApplication.pickupAll();
 	}
 }
